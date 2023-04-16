@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Latest compiled and minified CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css"
+    />
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <title>Document</title>
+    <style>
+      #btn {
+        display: block;
+        width: 100%;
+        border: none;
+        background-color: #04aa6d;
+        color: white;
+        padding: 14px 28px;
+        font-size: 26px;
+        cursor: pointer;
+        text-align: center;
+      }
+      .highcharts-figure,
+      .highcharts-data-table table {
+        min-width: 360px;
+        max-width: 800px;
+        margin: 1em auto;
+      }
+
+      .highcharts-data-table table {
+        font-family: Verdana, sans-serif;
+        border-collapse: collapse;
+        border: 1px solid #ebebeb;
+        margin: 10px auto;
+        text-align: center;
+        width: 100%;
+        max-width: 500px;
+      }
+
+      .highcharts-data-table caption {
+        padding: 1em 0;
+        font-size: 1.2em;
+        color: #555;
+      }
+
+      .highcharts-data-table th {
+        font-weight: 600;
+        padding: 0.5em;
+      }
+
+      .highcharts-data-table td,
+      .highcharts-data-table th,
+      .highcharts-data-table caption {
+        padding: 0.5em;
+      }
+
+      .highcharts-data-table thead tr,
+      .highcharts-data-table tr:nth-child(even) {
+        background: #f8f8f8;
+      }
+
+      .highcharts-data-table tr:hover {
+        background: #f1f7ff;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <button id="btn" onClick="getTime()">
+        Start
+      </button>
+
+      <div>
+        <p id="passedTime"></p>
+      </div>
+
+      <button onClick="showSummary()" id="summary-btn">View Summary</button>
+      <button onClick="showResults()" id="results-btn">View Results</button>
+      <div id="summary"></div>
+      <div id="results"></div>
+    </div>
+
+    <figure class="highcharts-figure">
+      <div id="container"></div>
+      <p class="highcharts-description">
+        A line chart showing the dataset of your results.
+      </p>
+    </figure>
+
+    <script>
+      let cachedClick;
+      let output;
+      let passedTime = document.getElementById("passedTime");
+      let btn = document.getElementById("btn");
+      let summaryBtn = document.getElementById("summary-btn");
+      let summary = document.getElementById("summary");
+      let startTime = new Date();
+      let color;
+      let cachedTimes = [];
+
+      function getTime() {
+        if (btn.innerHTML === "Start") {
+          startTime = Date.now();
+          btn.innerHTML = "Stop";
+          passedTime.style.display = "none";
+        } else {
+          passedTime.style.display = "block";
+          let stopTime = Date.now();
+
+          let timeDiff = stopTime - startTime;
+
+          cachedTimes.push(timeDiff);
+          btn.innerHTML = "Start";
+          console.log(cachedTimes);
+          timeDiff /= 1000;
+          if (timeDiff == 4) {
+            color = "lightgreen";
+          } else if (timeDiff >= 3.8 && timeDiff <= 4.2) {
+            color = "lightblue";
+          } else if (timeDiff >= 3.5 && timeDiff <= 4.5) {
+            color = "yellow";
+          } else {
+            color = "red";
+          }
+          passedTime.style.backgroundColor = color;
+
+          output = timeDiff + "seconds";
+          passedTime.innerHTML = output;
+          console.log(timeDiff + "seconds");
+        }
+      }
+
+      function showSummary() {
+        summary.innerHTML = "";
+        cachedTimes.forEach((cachedTime, i) => {
+          let start = new Date(startTime + i * 4000);
+          let stop = new Date(startTime + i * 4000 + cachedTime);
+          const li = document.createElement("li");
+          li.textContent = `Attempt ${i +
+            1}: ${start.toLocaleString()} - ${stop.toLocaleString()} (${cachedTime /
+            1000} seconds)`;
+          summary.appendChild(li);
+        });
+      }
+
+      function showResults() {
+        const totalAttempts = cachedTimes.length;
+        const minTime = Math.min(...cachedTimes) / 1000;
+        const maxTime = Math.max(...cachedTimes) / 1000;
+        const avgTime =
+          cachedTimes.reduce((sum, i) => sum + i, 0) /
+          cachedTimes.length /
+          1000;
+        document.getElementById(
+          "results"
+        ).innerHTML = `Total attempts: ${totalAttempts}<br>Minimum elapsed time: ${minTime.toFixed(
+          2
+        )} seconds<br>Maximum elapsed time: ${maxTime.toFixed(
+          2
+        )} seconds<br>Average elapsed time: ${avgTime.toFixed(2)} seconds`;
+      }
+
+      /* Chart */
+
+      function addData(container, label, data) {
+        chart.data.labels.push(label);
+        chart.data.datasets.forEach((dataset) => {
+          dataset.data.push(data);
+        });
+        chart.update();
+      }
+
+      function removeData(container) {
+        chart.data.labels.pop();
+        chart.data.datasets.forEach((dataset) => {
+          dataset.data.pop();
+        });
+        chart.update();
+      }
+
+      Highcharts.chart("container", {
+        title: {
+          text: "Graph Results",
+          align: "left",
+        },
+
+        subtitle: {
+          text:
+            'Source: <a href="https://irecusa.org/programs/solar-jobs-census/" target="_blank">IREC</a>',
+          align: "left",
+        },
+
+        yAxis: {
+          title: {
+            text: "Time in Milliseconds",
+          },
+        },
+
+        xAxis: {
+          accessibility: {
+            rangeDescription: "Range: 0 to 2020",
+          },
+        },
+
+        legend: {
+          layout: "vertical",
+          align: "right",
+          verticalAlign: "middle",
+        },
+
+        plotOptions: {
+          series: {
+            label: {
+              connectorAllowed: false,
+            },
+            pointStart: 0,
+          },
+        },
+
+        series: [
+          {
+            name: "Minimum elapsed time",
+            data: [
+              43934,
+              48656,
+              65165,
+              81827,
+              112143,
+              142383,
+              171533,
+              165174,
+              155157,
+              161454,
+              154610,
+            ],
+          },
+          {
+            name: ">Maximum elapsed time",
+            data: [
+              24916,
+              37941,
+              29742,
+              29851,
+              32490,
+              30282,
+              38121,
+              36885,
+              33726,
+              34243,
+              31050,
+            ],
+          },
+          {
+            name: "Attempt 3",
+            data: [
+              11744,
+              30000,
+              16005,
+              19771,
+              20185,
+              24377,
+              32147,
+              30912,
+              29243,
+              29213,
+              25663,
+            ],
+          },
+          {
+            name: "o",
+            data: [null, null, 11164],
+          },
+          {
+            name: "Other",
+            data: [
+              21908,
+              5548,
+              8105,
+              11248,
+              8989,
+              11816,
+              18274,
+              17300,
+              13053,
+              11906,
+              10073,
+            ],
+          },
+        ],
+
+        responsive: {
+          rules: [
+            {
+              condition: {
+                maxWidth: 500,
+              },
+              chartOptions: {
+                legend: {
+                  layout: "horizontal",
+                  align: "center",
+                  verticalAlign: "bottom",
+                },
+              },
+            },
+          ],
+        },
+      });
+    </script>
+  </body>
+</html>
